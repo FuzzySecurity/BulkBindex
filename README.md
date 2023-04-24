@@ -1,3 +1,5 @@
+![CI](https://github.com/FuzzySecurity/BulkBindex/actions/workflows/auto-update.yml/badge.svg)
+
 # BulkBindex
 
 `BulkBindex` is a **very** DIY extension for [`Winbindex`](https://winbindex.m417z.com/) by [@m417z](https://twitter.com/m417z). All the great work is done there really!
