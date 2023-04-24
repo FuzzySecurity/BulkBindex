@@ -12,9 +12,7 @@ jobs:
       matrix:
         input:
           - { value: ' -b 11-22H2 -d 2023-04', prefix: '11-22H2' }
-          - { value: ' -b 11-21H2 -d 2023-04', prefix: '11-21H2' }
           - { value: ' -b 22H2 -d 2023-04', prefix: '10-22H2' }
-          - { value: ' -b 21H2 -d 2023-04', prefix: '10-21H2' }
 
     steps:
     - name: Checkout code

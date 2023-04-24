@@ -111,8 +111,8 @@ dotnet BulkBindex.dll -b 11-22H2 -d 2023-04
 
 When you run `BulkBindex` you should expect about a 20 minute runtime to fetch all binaries for a single build (depending on bandwidth). In this repository I have also added `GitHub Workflow` automation which allows workers to fetch builds for various versions and add them to the same release.
 
-Further testing is needed but a release has already been uploaded for `April 2023 -> 11 22H2 21H2 & 10 22H2 21H2`. The intention is to add a schedule to the workflow so these releases are created right after `patch tuesday` starting from the next cycle.
+Further testing is needed but a release has already been uploaded for `April 2023 -> 11 22H2 & 10 22H2`. The intention is to add a schedule to the workflow so these releases are created right after `patch tuesday` starting from the next cycle.
 
 ## Halp?!
 
-The code is still quite DIY. I am more than happy to receive PR's both on `BulkBindex` and the `GitHub Workflow` automation!
+The code is still quite DIY. I am more than happy to receive PR's both on `BulkBindex` and the `GitHub Workflow` automation! Additions which also fetch `PDB's` welcome!
