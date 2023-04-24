@@ -1,0 +1,96 @@
+name: Build, Run and Publish Results
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_upload_artifacts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        input:
+          - { value: ' -b 11-22H2 -d 2023-04', prefix: '11-22H2' }
+          - { value: ' -b 11-21H2 -d 2023-04', prefix: '11-21H2' }
+          - { value: ' -b 22H2 -d 2023-04', prefix: '10-22H2' }
+          - { value: ' -b 21H2 -d 2023-04', prefix: '10-21H2' }
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Build the .NET 6 application
+      run: dotnet build --configuration Release
+    
+    - name: Extract date from input
+      id: extract_date
+      run: |
+        date=$(echo '${{ matrix.input.value }}' | grep -oP '(?<=-d\s)[\d-]+')
+        echo "::set-output name=date::$date"
+      
+    - name: Run the binary with matrix input
+      run: dotnet ./BulkBindex/bin/Release/net6.0/BulkBindex.dll ${{ matrix.input.value }}
+
+    - name: Archive x86 result
+      run: zip -j ./BulkBindex/bin/Release/net6.0/x86-${{ matrix.input.prefix }}-${{ steps.extract_date.outputs.date }}.zip ./BulkBindex/bin/Release/net6.0/Worker-Output/Download/x86/*
+      env:
+        OUTPUT_DIR: Worker-Output/Download
+        PROJECT_DIR: BulkBindex/bin/Release/net6.0
+    
+    - name: Archive x64 result
+      run: zip -j ./BulkBindex/bin/Release/net6.0/x64-${{ matrix.input.prefix }}-${{ steps.extract_date.outputs.date }}.zip ./BulkBindex/bin/Release/net6.0/Worker-Output/Download/x64/*
+      env:
+        OUTPUT_DIR: Worker-Output/Download
+        PROJECT_DIR: BulkBindex/bin/Release/net6.0
+
+    - name: Upload x86 result
+      uses: actions/upload-artifact@v2
+      with:
+        name: x86-result-${{ matrix.input.prefix }}-${{ steps.extract_date.outputs.date }}
+        path: ./BulkBindex/bin/Release/net6.0/x86-${{ matrix.input.prefix }}-${{ steps.extract_date.outputs.date }}.zip
+
+    - name: Upload x64 result
+      uses: actions/upload-artifact@v2
+      with:
+        name: x64-result-${{ matrix.input.prefix }}-${{ steps.extract_date.outputs.date }}
+        path: ./BulkBindex/bin/Release/net6.0/x64-${{ matrix.input.prefix }}-${{ steps.extract_date.outputs.date }}.zip
+
+  create_release:
+    needs: build_and_upload_artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Create release tag
+      id: create_tag
+      run: |
+        TAG_NAME="release-$(date +'%Y-%m-%d')-$(git rev-parse --short HEAD)"
+        git config user.name "github-actions"
+        git config user.email "github-actions@users.noreply.github.com"
+        git tag $TAG_NAME
+        echo "::set-output name=tag::$TAG_NAME"
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v2
+
+    - name: Publish release
+      if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.create_tag.outputs.tag }}
+        draft: false
+        prerelease: false
+        files: |
+          x86-result-*/*.zip
+          x64-result-*/*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
